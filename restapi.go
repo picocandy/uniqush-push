@@ -22,6 +22,8 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"path"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -68,6 +70,7 @@ const (
 	STOP_PROGRAM_URL                            = "/stop"
 	VERSION_INFO_URL                            = "/version"
 	QUERY_NUMBER_OF_DELIVERY_POINTS_URL         = "/nrdp"
+	UPLOAD_CERT_URL                              = "/upload"
 )
 
 var validServicePattern *regexp.Regexp
@@ -258,6 +261,25 @@ func (self *RestAPI) pushNotification(reqId string, kv map[string]string, perdp 
 	return
 }
 
+func (self *RestAPI) uploadCert(kv map[string]string, certData []byte, logger log.Logger, remoteAddr string) string {
+	var certName string
+	var ok bool
+
+	if certName, ok = kv["certname"]; !ok {
+		logger.Errorf("From=%v Missing certname parameter", remoteAddr)
+		return ""
+	}
+
+	certPath := path.Join(*uniqushCertificatesDirectory, certName)
+	err := ioutil.WriteFile(certPath, certData, 0644)
+	if err != nil {
+		logger.Errorf("From=%v Unable to write certificate file %+v", remoteAddr, err)
+		return ""
+	}
+
+	return certPath
+}
+
 func (self *RestAPI) stop(w io.Writer, remoteAddr string) {
 	self.waitGroup.Wait()
 	self.backend.Finalize()
@@ -351,6 +373,14 @@ func (self *RestAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		logger := log.MultiLogger(weblogger, self.loggers[LOGGER_PUSH])
 		rid := randomUniqId()
 		self.pushNotification(rid, kv, perdp, logger, remoteAddr)
+	case UPLOAD_CERT_URL:
+		weblogger := log.NewLogger(writer, "[Upload]", logLevel)
+		logger := log.MultiLogger(weblogger, self.loggers[LOGGER_PUSH])
+		certData, _ := ioutil.ReadAll(r.Body)
+		certPath := self.uploadCert(kv, certData, logger, remoteAddr)
+		if (certPath != "") {
+			w.Header().Set("Cert-Path", certPath)
+		}
 	}
 }
 
@@ -365,6 +395,7 @@ func (self *RestAPI) Run(addr string, stopChan chan<- bool) {
 	http.Handle(REMOVE_PUSH_SERVICE_PROVIDER_TO_SERVICE_URL, self)
 	http.Handle(PUSH_NOTIFICATION_URL, self)
 	http.Handle(QUERY_NUMBER_OF_DELIVERY_POINTS_URL, self)
+	http.Handle(UPLOAD_CERT_URL, self)
 	self.stopChan = stopChan
 	err := http.ListenAndServe(addr, nil)
 	if err != nil {

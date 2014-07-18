@@ -27,6 +27,7 @@ import (
 
 var uniqushPushConfFlags = flag.String("config", "/etc/uniqush/uniqush-push.conf", "Config file path")
 var uniqushPushShowVersionFlag = flag.Bool("version", false, "Version info")
+var uniqushCertificatesDirectory = flag.String("certsdir", "/etc/uniqush/certificates", "Certificates directory")
 
 var uniqushPushVersion = "uniqush-push 1.5.2"
 
@@ -37,6 +38,12 @@ func installPushSrvices() {
 	InstallADM()
 }
 
+func checkCertificatesDirectory() {
+	if _, err := os.Stat(*uniqushCertificatesDirectory); os.IsNotExist(err) {
+		os.Mkdir(*uniqushCertificatesDirectory, 0755)
+	}
+}
+
 func main() {
 	flag.Parse()
 	if *uniqushPushShowVersionFlag {
@@ -45,6 +52,7 @@ func main() {
 	}
 	runtime.GOMAXPROCS(runtime.NumCPU() + 1)
 	installPushSrvices()
+	checkCertificatesDirectory()
 
 	err := Run(*uniqushPushConfFlags, uniqushPushVersion)
 	if err != nil {
