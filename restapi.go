@@ -275,6 +275,8 @@ func (self *RestAPI) uploadCert(kv map[string]string, certData []byte, logger lo
 	if err != nil {
 		logger.Errorf("From=%v Unable to write certificate file %+v", remoteAddr, err)
 		return ""
+	} else {
+		logger.Infof("From=%v CertName=%v CertPath=%v Success!", remoteAddr, certName, certPath)
 	}
 
 	return certPath
@@ -375,7 +377,7 @@ func (self *RestAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		self.pushNotification(rid, kv, perdp, logger, remoteAddr)
 	case UPLOAD_CERT_URL:
 		weblogger := log.NewLogger(writer, "[Upload]", logLevel)
-		logger := log.MultiLogger(weblogger, self.loggers[LOGGER_PUSH])
+		logger := log.MultiLogger(weblogger, self.loggers[LOGGER_UPLOAD])
 		certData, _ := ioutil.ReadAll(r.Body)
 		certPath := self.uploadCert(kv, certData, logger, remoteAddr)
 		if (certPath != "") {

@@ -39,8 +39,18 @@ func installPushSrvices() {
 }
 
 func checkCertificatesDirectory() {
-	if _, err := os.Stat(*uniqushCertificatesDirectory); os.IsNotExist(err) {
-		os.Mkdir(*uniqushCertificatesDirectory, 0755)
+	_, err := os.Stat(*uniqushCertificatesDirectory);
+	if (err != nil) && !os.IsNotExist(err) {
+		fmt.Fprintf(os.Stderr, "Unable to access certificates directory, %s\n", err)
+		os.Exit(1)
+	}
+
+	if os.IsNotExist(err) {
+		err = os.Mkdir(*uniqushCertificatesDirectory, 0755)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Unable to create certificates directory, %s\n", err)
+			os.Exit(1)
+		}
 	}
 }
 

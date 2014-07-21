@@ -34,6 +34,7 @@ const (
 	LOGGER_SUB
 	LOGGER_UNSUB
 	LOGGER_PUSH
+	LOGGER_UPLOAD
 	LOGGER_NR_LOGGERS
 )
 
@@ -177,6 +178,12 @@ func LoadLoggers(c *conf.ConfigFile) (loggers []Logger, err error) {
 	}
 
 	loggers[LOGGER_PUSH], err = loadLogger(logfile, c, "Push", "[Push]")
+	if err != nil {
+		loggers = nil
+		return
+	}
+
+	loggers[LOGGER_UPLOAD], err = loadLogger(logfile, c, "Upload", "[Upload]")
 	if err != nil {
 		loggers = nil
 		return
