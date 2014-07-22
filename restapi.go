@@ -23,8 +23,8 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"path"
 	"net/http"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -70,7 +70,7 @@ const (
 	STOP_PROGRAM_URL                            = "/stop"
 	VERSION_INFO_URL                            = "/version"
 	QUERY_NUMBER_OF_DELIVERY_POINTS_URL         = "/nrdp"
-	UPLOAD_CERT_URL                              = "/upload"
+	UPLOAD_CERT_URL                             = "/upload"
 )
 
 var validServicePattern *regexp.Regexp
@@ -261,25 +261,25 @@ func (self *RestAPI) pushNotification(reqId string, kv map[string]string, perdp 
 	return
 }
 
-func (self *RestAPI) uploadCert(kv map[string]string, certData []byte, logger log.Logger, remoteAddr string) string {
+func (self *RestAPI) uploadCert(w http.ResponseWriter, kv map[string]string, certData []byte, logger log.Logger, remoteAddr string) {
 	var certName string
 	var ok bool
 
 	if certName, ok = kv["certname"]; !ok {
 		logger.Errorf("From=%v Missing certname parameter", remoteAddr)
-		return ""
+		return
 	}
 
 	certPath := path.Join(*uniqushCertificatesDirectory, certName)
 	err := ioutil.WriteFile(certPath, certData, 0644)
 	if err != nil {
 		logger.Errorf("From=%v Unable to write certificate file %+v", remoteAddr, err)
-		return ""
-	} else {
-		logger.Infof("From=%v CertName=%v CertPath=%v Success!", remoteAddr, certName, certPath)
+		return
 	}
 
-	return certPath
+	w.Header().Set("Cert-Path", certPath)
+	logger.Infof("From=%v CertName=%v CertPath=%v Success!", remoteAddr, certName, certPath)
+	return
 }
 
 func (self *RestAPI) stop(w io.Writer, remoteAddr string) {
@@ -379,10 +379,7 @@ func (self *RestAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		weblogger := log.NewLogger(writer, "[Upload]", logLevel)
 		logger := log.MultiLogger(weblogger, self.loggers[LOGGER_UPLOAD])
 		certData, _ := ioutil.ReadAll(r.Body)
-		certPath := self.uploadCert(kv, certData, logger, remoteAddr)
-		if (certPath != "") {
-			w.Header().Set("Cert-Path", certPath)
-		}
+		self.uploadCert(w, kv, certData, logger, remoteAddr)
 	}
 }
 

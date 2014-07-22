@@ -20,9 +20,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	. "github.com/uniqush/uniqush-push/srv"
 	"os"
 	"runtime"
-	. "github.com/uniqush/uniqush-push/srv"
 )
 
 var uniqushPushConfFlags = flag.String("config", "/etc/uniqush/uniqush-push.conf", "Config file path")
@@ -39,7 +39,7 @@ func installPushSrvices() {
 }
 
 func checkCertificatesDirectory() {
-	_, err := os.Stat(*uniqushCertificatesDirectory);
+	_, err := os.Stat(*uniqushCertificatesDirectory)
 	if (err != nil) && !os.IsNotExist(err) {
 		fmt.Fprintf(os.Stderr, "Unable to access certificates directory, %s\n", err)
 		os.Exit(1)
