@@ -782,6 +782,10 @@ func toAPNSPayload(n *Notification) ([]byte, error) {
 			continue
 		case "ttl":
 			continue
+		case "category":
+			aps[k] = v
+		case "title":
+			alert[k] = v
 		default:
 			payload[k] = v
 		}

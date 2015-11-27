@@ -10,4 +10,4 @@ curl http://127.0.0.1:9898/addpsp -d service=myservice -d pushservicetype=apns -
 
 curl http://127.0.0.1:9898/subscribe -d service=myservice -d subscriber=uniqush.client -d pushservicetype=apns -d devtoken=3df3e210e7adf35f840f45b269b760d9d51081569dc4509ee98bb4d4c92a828e
 
-curl http://127.0.0.1:9898/push -d service=myservice -d subscriber=uniqush.client -d msg="Hello World"
+curl http://127.0.0.1:9898/push -d service=myservice -d subscriber=uniqush.client -d msg="Hello World" -d title="Title" -d category="Testing" -d badge=2 -d custom_data1="cool" -d custom_data2="cat"
